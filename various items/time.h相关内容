@@ -1,1 +1,72 @@
-
+几个关于时间的概念：
+    1、协调世界时间（世界标准时间）：Coordinated Universal Time (UTC)，也就是格林威治标准时间。比如中国处在东八区，与标准时间相差8个小时，所以中国的协
+调世界时间为UTC+8，而美国的则为UTC-5；
+    2、日历时间：Calendar Time，表示从一个标准时间点到此时的时间点总共经过的秒数，它的值和编译器相关，不同的编译器所使用的标准时间点可能有所不同。但是
+对于同一个编译系统来说这个标准时间点是固定的，无论在哪个时区在同一时刻的日历时间都是相同的。
+    3、时间点：Epoch，时间点在C/C++中用一个整数表示，它的值和日历时间相等。
+    4、时钟计时单元：Clock Tick，它的长短由CPU控制，但不等于CPU的一个时钟周期，它是C/C++中的一个基本计时单位。
+    
+与日期和时间相关的一些数据类型、结构和用法：
+    1、struct tm结构
+    在标准C/C++中我们可以使用这个结构体来获取日期和时间，它的定义如下：
+    #ifndef _TM_DEFINED
+    struct tm
+    {
+        int tm_sec;                    //秒数
+        int tm_min;                    //分钟
+        int tm_hour;                   //小时
+        
+        int tm_mday;                   //日
+        int tm_mon;                    //月份
+        int tm_year;                   //年份
+        
+        int tm_wday;                   //星期 0代表星期日，7代表星期六
+        int tm_yday;                   //该年1月1日开始到现在的天数
+        int tm_isdst;                  //夏令时标识符，实行夏令时为正，不实行时为0，不了解情况为负
+    };
+    #define _TM_DEFINED
+    #endif
+    2、time_t 类型
+    #ifndef _TIME_T_DEFINED
+    typedef long time_t;               //这是32位定义，也有64位其类型为long long
+    #define _TIME_T_DEFINED
+    #endif
+    3、
+相关的一些函数以及用法：
+    1、可以通过 time() 函数来获得日历时间，其函数原型为：
+    time_t time(time_t *timer);
+    如果timer=NULL，则返回从一个标准时间点(1970-01-01 00:00:00)到现在的秒数；如果不为空，则把返回的值也存在指针所指向的变量里。
+    
+    2、将一个日历时间转换成为 struct tm 结构类型的时间，可以用下面两个函数：
+    struct tm* gmtime(const time_t *timer)
+    struct tm* localtime(const time_t *timer)
+    
+    其中第一个是把日历时间转换成为世界标准时间（格林尼治时间），第二个则是转换成为本地时间（其中 tm_year 从1900年算，所以想要得到此时的年份要把结果
+    里的 tm_year 加上1900，而 tm_mon 则是从0开始所以得到正确的月份要在得到的结果里加1）。
+    
+    其中localtime是不安全的，它的使用仅需定义一个 struct rm 的指针而不需要给它分配空间，分配空间的任务由该函数代为处理，因此在其它线程调用该函数时
+    其中的指针就会发生改变，所以是非线程安全的。在 windows 和 linux 里分别提供了相应的安全的版本，分别为：
+    windows   struct tm* localtime_s(struct tm* result,const struct tm* timer)
+    linux     struct tm* localtime_s(const struct tm* timer,struct tm* result)
+    以 localtime_r 为例：
+    #include<iostream>
+    #include<time.h>
+    #include<iomanip>
+    using namespace std;
+    int main()
+    {
+        time_t timer=time(NULL);
+        struct tm local;
+        localtime_r(&timer,&local);                               //此时转换成的值存储在了 local 中，即使其它线程调用也不影响它的值
+        cout<<setw(4)<<setfill('0')<<local.tm_year+1900<<"-"
+            <<setw(2)<<setfill('0')<<local.tm_mon+1<<"-"
+            <<setw(2)<<setfill('0')<<local.tm_mday<<" "
+	          <<setw(2)<<setfill('0')<<local.tm_hour<<":"
+		        <<setw(2)<<setfill('0')<<local.tm_min<<":"
+		        <<setw(2)<<setfill('0')<<local.tm_sec<<endl;
+        return 0;
+    }
+    
+    
+    
+    
