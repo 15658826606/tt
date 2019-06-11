@@ -1,1 +1,65 @@
+#include<glad/glad.h>                    //相对于旧版glew的新版
+#include<GLFW/glfw3.h>                   //相对于旧版glut的新版
+#include<iostream>
 
+const unsigned int SCR_WIDTH = 400;      //窗口的宽度
+const unsigned int SCR_HEIGHT = 300;     //窗口的高度
+
+void drawPoint();                        //画点函数的前置声明
+
+int main()
+{
+	glfwInit();          //初始化glfw
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);             //设置
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OPENGL", NULL, NULL);        //创建一个窗口
+	if (window == NULL)                             //判断窗口创建是否成功
+	{
+		std::cout << "窗口创建失败！" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);                //
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))             初始化glad
+	{
+		std::cout << "初始化GLAD失败！" << std::endl;
+		return -2;
+	}
+
+	while (!glfwWindowShouldClose(window))              //循环监听窗口关闭事件，如果窗口不关闭就循环处理窗口里的一些请求
+	{
+		drawPoint();                                      //画点函数，渲染工作的主要部分
+		glfwSwapBuffers(window);                          //对于双缓冲交换缓冲区
+		glfwPollEvents();                                 //检测是否有输入事件，如键盘按键、鼠标点击等
+	}
+  
+	glfwTerminate();                                    //
+	return 0;
+}
+
+void drawPoint()
+{
+	
+	glClearColor(0.0f, 0.8f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	GLuint VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	GLfloat vertex[] = { 0.0f,0.0f,0.0f};
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glPointSize(12.0);
+	glDrawArrays(GL_POINTS, 0, 1);
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glDisableVertexAttribArray(0);
+}
