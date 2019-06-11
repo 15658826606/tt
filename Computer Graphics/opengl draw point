@@ -9,19 +9,35 @@ void drawPoint();                        //画点函数的前置声明
 
 int main()
 {
-	glfwInit();          //初始化glfw
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);             //设置
+	glfwInit();   //必须在其他任何GLFW函数之前被调用，因为它负责初始化整个GLFW库。如果成功的话，该接口将返回GL_TRUE，否则就会返回GL_FALSE
+	
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);          
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_RESIZABLE,GLFW_FALSE);
+	//Hint直接翻译成中文是“线索”，这里大致指“选项”,使用glfwWindowHint()可以设置一些关于窗口的选项;glfwWindowHint()接受两个参数:
+	  第一个是我们要设置的hint的名字,使用GLFW常量（以GLFW_开头）指定;第二个是我们要把该hint设置成的值,该值随要设置的hint而异;
+          Hint也有很多种,这里我们只设置了4种,分别是
+	                                          OpenGL主版本号（GLFW_CONTEXT_VERSION_MAJOR）、
+						  OpenGL副版本号（GLFW_CONTEXT_VERSION_MINOR）、
+						  OpenGL模式（GLFW_OPENGL_PROFILE）、
+						  窗口是否可调整大小（GLFW_RESIZABLE）;
+						  这4个hint我们分别设置为3、3、GLFW_CORE_PROFILE、GLFW_FALSE;
+          因为我们要使用OpenGL 3.3,所以我们把GLFW_CONTEXT_VERSION_MAJOR和GLFW_CONTEXT_VERSION_MINOR对应的hint都设置为3;
+	  因为我们要使用OpenGL核心模式,所以我们把GLFW_OPENGL_PROFILE对应的hint设置为GLFW_OPENGL_CORE_PROFILE,表示使用OpenGL核心模式;
+	  最后,把GLFW_RESIZABLE对应的hint设置为GLFW_FALSE,表示窗口不允许用户调整大小;之所以这样做是因为如果允许用户调整大小,大小发生变化后,
+	  窗口的绘制区域默认不变（依然是原来窗口的区域）,也就是说窗口上绘制的图像的大小、位置不会发生改变;为了避免这种现象发生，我们就简单地不让
+	  用户调整窗口大小（当然也有更好的方法,就是用GLFW设置一个窗口大小的回调函数,但这样比较简单）
 
-	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OPENGL", NULL, NULL);        //创建一个窗口
+	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OPENGL", NULL, NULL);     //创建一个窗口
 	if (window == NULL)                             //判断窗口创建是否成功
 	{
 		std::cout << "窗口创建失败！" << std::endl;
-		glfwTerminate();
+		glfwTerminate();            //关闭glfw库本身
 		return -1;
 	}
-	glfwMakeContextCurrent(window);                //
+	glfwMakeContextCurrent(window);     //设置参数window中的窗口所关联的OpenGL环境为当前环境,这个环境在当前线程中会一直保持为当前环境，
+	                                      直到另一个环境被设置为当前环境，或者窗口被删除为止
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))             初始化glad
 	{
@@ -29,14 +45,17 @@ int main()
 		return -2;
 	}
 
-	while (!glfwWindowShouldClose(window))              //循环监听窗口关闭事件，如果窗口不关闭就循环处理窗口里的一些请求
+	while (!glfwWindowShouldClose(window))     //如果用户准备关闭参数window所指定的窗口，那么此接口将会返回GL_TRUE，否则将会返回GL_FALSE
 	{
-		drawPoint();                                      //画点函数，渲染工作的主要部分
-		glfwSwapBuffers(window);                          //对于双缓冲交换缓冲区
-		glfwPollEvents();                                 //检测是否有输入事件，如键盘按键、鼠标点击等
+		drawPoint();                       //画点函数，渲染工作的主要部分
+		glfwSwapBuffers(window);           //请求窗口系统将参数window关联的后缓存画面呈现给用户,通常这一步是通过窗口的前后缓存的交换
+		                                     完成的,也可能是在一个“预备显示”的帧缓存队列中进行截取，窗口系统可能需要等待一次垂直刷新
+						     事件完成，再显示帧的内容
+		glfwPollEvents();                  //告诉GLFW检查所有等待处理的事件和消息，包括操作系统和窗口系统中应当处理的消息,如果有消息
+		                                     正在等待，它会先处理这些消息再返回；否则该函数会立即返回
 	}
   
-	glfwTerminate();                                    //
+	glfwTerminate();                           //关闭glfw库本身
 	return 0;
 }
 
