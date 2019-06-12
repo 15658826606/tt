@@ -1,0 +1,129 @@
+/*********************************************************************************************************
+*使用可编程渲染管线画三角形，用到了顶点着色器和片段着色器
+*
+*
+*
+*********************************************************************************************************/
+#include<glad/glad.h>
+#include<GLFW/glfw3.h>
+//#include<math3d.h>
+#include<iostream>
+
+const unsigned int SCR_WIDTH = 400;
+const unsigned int SCR_HEIGHT = 300;
+
+int main()
+{
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OPENGL", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "窗口创建失败！" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "初始化GLAD失败！" << std::endl;
+		return -2;
+	}
+	//glViewport(0, 0, 100, 100);
+
+
+
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	GLuint VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	GLfloat vertex[] = { 0.0f,0.0f,0.0f,
+	                     0.5f,0.0f,0.0f,
+	                     0.5f,0.5f,0.0f};
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,3*sizeof(float), 0);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	const char *vertex_shader_source =
+		"#version 330 core\n"
+		"layout (location=0) in vec3 aPos;\n"
+		"void main()\n"
+		"{\n"
+		"    gl_Position=vec4(aPos,1.0);\n"
+		"}\n\0";
+	const char *fragment_shader_source =
+		"#version 330 core\n"
+		"out vec4 FragColor;\n"
+		"void main()\n"
+		"{\n"
+		"    FragColor=vec4(0.0f,0.8f,0.0f,1.0f);\n"
+		"}\n\0";
+	int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
+	glCompileShader(vertex_shader);
+	int success;
+	char info_log[512];
+	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << std::endl;
+	}
+
+	int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
+	glCompileShader(fragment_shader);
+	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << std::endl;
+	}
+
+	int shader_program = glCreateProgram();
+	glAttachShader(shader_program, vertex_shader);
+	glAttachShader(shader_program, fragment_shader);
+	glLinkProgram(shader_program);
+	glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shader_program, 512, NULL, info_log);
+		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << std::endl;
+	}
+	glDeleteShader(vertex_shader);
+	glDeleteShader(fragment_shader);
+
+	while (!glfwWindowShouldClose(window))
+	{
+		//glPointSize(12.0);
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(shader_program);
+
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+	
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+
+	glfwTerminate();
+
+	return 0;
+}
