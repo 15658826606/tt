@@ -1,3 +1,9 @@
+/**************************************************************************************************************
+*
+*
+*
+*
+***************************************************************************************************************/
 #include<glad/glad.h>                    //相对于旧版glew的新版
 #include<GLFW/glfw3.h>                   //相对于旧版glut的新版
 #include<iostream>
@@ -44,27 +50,7 @@ int main()
 		std::cout << "初始化GLAD失败！" << std::endl;
 		return -2;
 	}
-
-	while (!glfwWindowShouldClose(window))     //如果用户准备关闭参数window所指定的窗口，那么此接口将会返回GL_TRUE，否则将会返回GL_FALSE
-	{
-		drawPoint();                       //画点函数，渲染工作的主要部分
-		glfwSwapBuffers(window);           //请求窗口系统将参数window关联的后缓存画面呈现给用户,通常这一步是通过窗口的前后缓存的交换
-		                                     完成的,也可能是在一个“预备显示”的帧缓存队列中进行截取，窗口系统可能需要等待一次垂直刷新
-						     事件完成，再显示帧的内容
-		glfwPollEvents();                  //告诉GLFW检查所有等待处理的事件和消息，包括操作系统和窗口系统中应当处理的消息,如果有消息
-		                                     正在等待，它会先处理这些消息再返回；否则该函数会立即返回
-	}
-  
-	glfwTerminate();                           //关闭glfw库本身
-	return 0;
-}
-
-void drawPoint()
-{
-	
-	glClearColor(0.0f, 0.8f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
+        
 	GLuint VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -72,13 +58,39 @@ void drawPoint()
 	GLuint VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	GLfloat vertex[] = { 0.0f,0.0f,0.0f};
+
+	GLfloat vertex[] = { 0.0f,0.0f,0.0f };
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glPointSize(12.0);
-	glDrawArrays(GL_POINTS, 0, 1);
-	glBindBuffer(GL_ARRAY_BUFFER,0);
-	glDisableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	while (!glfwWindowShouldClose(window))   //如果用户准备关闭参数window所指定的窗口，那么此接口将会返回GL_TRUE，否则将会返回GL_FALSE
+	{
+		glPointSize(12.0);
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);  //与其它glfw开头的函数（这些函数由GLFW提供）不同,这个函数是以gl开头的,是OpenGL的函数;
+	                                             glClearColor用来设置窗口被清除时的颜色,也就是背景颜色,前3个参数分别是背景颜色的R、G、B
+						     分量,范围是0~1;第4个是alpha值表示透明度，这里只是设为1.0f，表示不透明
+		glClear(GL_COLOR_BUFFER_BIT);      //这将会清除当前窗口,把所有像素的颜色都设置为前面所设置的清除颜色;GL_COLOR_BUFFER_BIT是
+	                                             OpenGL定义的常量,表示清除颜色缓存;还有GL_DEPTH_BUFFER_BIT和GL_STENCIL_BUFFER_BIT
+		
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_POINTS, 0, 1);
+		glBindVertexArray(0);
+
+		glfwSwapBuffers(window);    //请求窗口系统将参数window关联的后缓存画面呈现给用户,通常这一步是通过窗口的前后缓存的交换
+		                              完成的,也可能是在一个“预备显示”的帧缓存队列中进行截取，窗口系统可能需要等待一次垂直刷新
+					      事件完成，再显示帧的内容
+		glfwPollEvents();           //告诉GLFW检查所有等待处理的事件和消息，包括操作系统和窗口系统中应当处理的消息,如果有消息
+		                              正在等待，它会先处理这些消息再返回；否则该函数会立即返回
+	}
+	
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	
+	glfwTerminate();                           //关闭glfw库本身
+	return 0;
 }
