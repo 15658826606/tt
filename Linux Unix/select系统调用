@@ -1,7 +1,7 @@
 /******************************************************************************************************************************
 * Create Time : 2019-06-17
 * Author      : tt
-* content     :a simple select system call program
+* content     : a simple select system call program
 *
 ******************************************************************************************************************************/
 
@@ -44,7 +44,7 @@ int main(int argc,char **argv)
    socklen_t client_addr_len=sizeof(client_addr);                           //accept系统调用使用的地址大小为socklen_t类型
    char ipbuf[64];                                                          //存储ip地址字符串
    char recvbuf[1024];                                                      //读数组
-   char sendbuf[1024];                                                     //写数组
+   char sendbuf[1024];                                                      //写数组
    memset(ipbuf,'\0',sizeof(ipbuf));
    memset(recvbuf,'\0',sizeof(ipbuf));
    memset(sendbuf,'\0',sizeof(ipbuf));
@@ -65,14 +65,14 @@ int main(int argc,char **argv)
       }
       for(int i=0;i<1024;i++)
       {
-         if(i==sock_listen&&FD_ISSET(sock_listen,&read_fds))                //如果sock_listen上有读事件就accept处理并注册新的读文件描述符
+         if(i==sock_listen&&FD_ISSET(sock_listen,&read_fds))               //如果sock_listen上有读事件就accept处理并注册新的读文件描述符
          {
             int sock_client=accept(sock_listen,(struct sockaddr*)&client_addr,&client_addr_len);
             printf("client ip : %s port : %d client socket : %u\n",
                     inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ipbuf,sizeof(ipbuf)),
                     ntohs(client_addr.sin_port),
                     sock_client);
-            FD_SET(sock_client,&read);                                      //向read里注册新接受的连接socket的读事件
+            FD_SET(sock_client,&read);                                     //向read里注册新接受的连接socket的读事件
          }
          else if(FD_ISSET(i,&read_fds))
          {
