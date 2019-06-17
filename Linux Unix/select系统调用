@@ -14,54 +14,82 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 
-#define ip "192.168.206.163"                                                //服务器ip地址宏定义
-#define PORT 6666                                                           //服务器监听端口宏定义
+#define ip "192.168.206.163"                                                      //服务器ip地址宏定义
+#define PORT 6666                                                                 //服务器监听端口宏定义
 
 int main(int argc,char **argv)
 {
-   struct sockaddr_in server_addr;                                          //服务器地址结构体定义
-   bzero(&server_addr,sizeof(server_addr));                                 //把服务器地址结构体清空
+   struct sockaddr_in server_addr;                                                //服务器地址结构体定义
+   bzero(&server_addr,sizeof(server_addr));                                       //把服务器地址结构体清空
    
-   server_addr.sin_family=AF_INET;                                          //设置服务器地址结构体的地址族为TCP/IP 4 对应的值AF_INET
-   inet_pton(AF_INET,ip,&server_addr.sin_addr);                             //设置服务器地址结构体的ip地址的值
-   //server_addr.sin_addr.s_addr=htonl(INADDR_ANY);                         //另外一种设置服务器地址结构体ip的方式（本地所有ip）
-   server_addr.sin_port=htons(PORT);                                        //设置服务器地址结构体的端口号值
+   server_addr.sin_family=AF_INET;                                                //设置服务器地址结构体的地址族为TCP/IP 4 对应的值AF_INET
+   inet_pton(AF_INET,ip,&server_addr.sin_addr);                                   //设置服务器地址结构体的ip地址的值
+   //server_addr.sin_addr.s_addr=htonl(INADDR_ANY);                               //另外一种设置服务器地址结构体ip的方式（本地所有ip）
+   server_addr.sin_port=htons(PORT);                                              //设置服务器地址结构体的端口号值
 
-   int sock_listen=socket(AF_INET,SOCK_STREAM,0);                           //定义监听socket
-   bind(sock_listen,(struct sockaddr*)&server_addr,sizeof(server_addr));    //把服务器地址结构体与监听socket进行绑定
-   listen(sock_listen,5);                                                   //监听开始
+   int sock_listen=socket(AF_INET,SOCK_STREAM,0);                                 //定义监听socket
+   if(bind(sock_listen,(struct sockaddr*)&server_addr,sizeof(server_addr))==-1)   //把服务器地址结构体与监听socket进行绑定
+   {
+      printf("bind failed!\n");
+      exit(1);
+   }
+   if(listen(sock_listen,5)==-1)                                                   //监听开始
+   {
+      printf("listen failed!\n");
+      exit(1);
+   }
 
    struct sockaddr_in client_addr;                                          //定义客户端连接时的客户端地址结构体
    bzero(&client_addr,sizeof(client_addr));
    socklen_t client_addr_len=sizeof(client_addr);                           //accept系统调用使用的地址大小为socklen_t类型
+   char ipbuf[64];                                                          //存储ip地址字符串
+   char recvbuf[1024];                                                      //读数组
+   char sendbuf[1024];                                                     //写数组
+   memset(ipbuf,'\0',sizeof(ipbuf));
+   memset(recvbuf,'\0',sizeof(ipbuf));
+   memset(sendbuf,'\0',sizeof(ipbuf));
 
-   fd_set read_fds,read;                                                    //
-   FD_ZERO(&read_fds);
+   fd_set read_fds,read;                                                    //定义可读文件描述符read_fds及read
+   FD_ZERO(&read_fds);                                                      //对文件描述符清零处理
    FD_ZERO(&read);
-   FD_SET(sock_listen,&read);
+   FD_SET(sock_listen,&read);                                               //向read注册sock_listen的读事件
    
-   while(1)
+   while(1)                                                                 //开始循环处理
    {
-      read_fds=read;
-      int ret=select(1024,&read_fds,NULL,NULL,NULL);
-      printf("ret= %d \n",ret);
-      printf("%d \n",FD_ISSET(sock_listen,&read_fds));
+      read_fds=read;                                                        //把read赋值给read_fds
+      int ret=select(1024,&read_fds,NULL,NULL,NULL);                        //执行select系统调用，其中写、异常事件及返回时间均设为NULL
       if(ret<0)
       {
-         printf("select failure\n");
+         printf("select failed\n");
          continue;
       }
       for(int i=0;i<1024;i++)
       {
-         if(i==sock_listen&&FD_ISSET(sock_listen,&read_fds))
+         if(i==sock_listen&&FD_ISSET(sock_listen,&read_fds))                //如果sock_listen上有读事件就accept处理并注册新的读文件描述符
          {
             int sock_client=accept(sock_listen,(struct sockaddr*)&client_addr,&client_addr_len);
-            printf("sock_client : %u port : %d\n",sock_client,ntohs(client_addr.sin_port));
-            FD_SET(sock_client,&read);
+            printf("client ip : %s port : %d client socket : %u\n",
+                    inet_ntop(AF_INET,ipbuf,&client_addr.sin_addr,client_addr_len),
+                    ntohs(client_addr.sin_port),
+                    sock_client);
+            FD_SET(sock_client,&read);                                      //向read里注册新接受的连接socket的读事件
          }
          else if(FD_ISSET(i,&read_fds))
          {
-            //printf("socket %d message!\n",i);
+            if(recv(i,recvbuf,sizeof(recvbuf),0)>0)                        //如果收到的字节大于0打印并写回
+            {
+               printf("receive data : %s\n",recvbuf);
+               send(i,sendbuf,sizeof(sendbuf),0);         
+            }
+            else if(recv(i,recvbuf,sizeof(recvbuf),0)==0)                  //如果读到的数据长度等于0说明对方socket关闭，从read清除该socket
+            {
+               FD_CLR(i,&read);
+            }
+            else                                                           //如果返回值为-1说明接收失败
+            {
+               printf(recv failed!\n);
+               continue;
+            }
          }
       }
    }
