@@ -7,12 +7,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
 #include <sys/select.h>
+#include <sys/socket.h>
 
 #define ip "192.168.206.163"                                                //服务器ip地址宏定义
 #define PORT 6666                                                           //服务器监听端口宏定义
