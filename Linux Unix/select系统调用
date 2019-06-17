@@ -1,7 +1,7 @@
 /******************************************************************************************************************************
 * Create Time : 2019-06-17
 * Author      : tt
-* content     :select system call program
+* content     :a simple select system call program
 *
 ******************************************************************************************************************************/
 
@@ -69,7 +69,7 @@ int main(int argc,char **argv)
          {
             int sock_client=accept(sock_listen,(struct sockaddr*)&client_addr,&client_addr_len);
             printf("client ip : %s port : %d client socket : %u\n",
-                    inet_ntop(AF_INET,ipbuf,&client_addr.sin_addr,client_addr_len),
+                    inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ipbuf,sizeof(ipbuf)),
                     ntohs(client_addr.sin_port),
                     sock_client);
             FD_SET(sock_client,&read);                                      //向read里注册新接受的连接socket的读事件
@@ -84,6 +84,7 @@ int main(int argc,char **argv)
             else if(recv(i,recvbuf,sizeof(recvbuf),0)==0)                  //如果读到的数据长度等于0说明对方socket关闭，从read清除该socket
             {
                FD_CLR(i,&read);
+               printf("FD_CLR : %d\n",i);
             }
             else                                                           //如果返回值为-1说明接收失败
             {
