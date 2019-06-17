@@ -21,6 +21,7 @@ int main(int argc,char **argv)
 {
    struct sockaddr_in server_addr;                                          //服务器地址结构体定义
    bzero(&server_addr,sizeof(server_addr));                                 //把服务器地址结构体清空
+   
    server_addr.sin_family=AF_INET;                                          //设置服务器地址结构体的地址族为TCP/IP 4 对应的值AF_INET
    inet_pton(AF_INET,ip,&server_addr.sin_addr);                             //设置服务器地址结构体的ip地址的值
    //server_addr.sin_addr.s_addr=htonl(INADDR_ANY);                         //另外一种设置服务器地址结构体ip的方式（本地所有ip）
