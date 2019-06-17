@@ -84,6 +84,7 @@ int main(int argc,char **argv)
             else if(recv(i,recvbuf,sizeof(recvbuf),0)==0)                  //如果读到的数据长度等于0说明对方socket关闭，从read清除该socket
             {
                FD_CLR(i,&read);
+               close(i);                                                   //关闭该socket
                printf("FD_CLR : %d\n",i);
             }
             else                                                           //如果返回值为-1说明接收失败
@@ -94,5 +95,6 @@ int main(int argc,char **argv)
          }
       }
    }
+   close(sock_listen);
    return 0;
 }
