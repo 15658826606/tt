@@ -1,1 +1,68 @@
+/******************************************************************************************************************************
+* Create Time : 2019-06-17
+* Author      : tt
+* content     :select system call program
+*
+******************************************************************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <sys/select.h>
+
+#define ip "192.168.206.163"                                                //服务器ip地址宏定义
+#define PORT 6666                                                           //服务器监听端口宏定义
+
+int main(int argc,char **argv)
+{
+   struct sockaddr_in server_addr;                                          //服务器地址结构体定义
+   bzero(&server_addr,sizeof(server_addr));                                 //把服务器地址结构体清空
+   server_addr.sin_family=AF_INET;                                          //设置服务器地址结构体的地址族为TCP/IP 4 对应的值AF_INET
+   inet_pton(AF_INET,ip,&server_addr.sin_addr);                             //设置服务器地址结构体的ip地址的值
+   //server_addr.sin_addr.s_addr=htonl(INADDR_ANY);                         //另外一种设置服务器地址结构体ip的方式（本地所有ip）
+   server_addr.sin_port=htons(PORT);                                        //设置服务器地址结构体的端口号值
+
+   int sock_listen=socket(AF_INET,SOCK_STREAM,0);                           //定义监听socket
+   bind(sock_listen,(struct sockaddr*)&server_addr,sizeof(server_addr));    //把服务器地址结构体与监听socket进行绑定
+   listen(sock_listen,5);                                                   //监听开始
+
+   struct sockaddr_in client_addr;                                          //定义客户端连接时的客户端地址结构体
+   bzero(&client_addr,sizeof(client_addr));
+   socklen_t client_addr_len=sizeof(client_addr);                           //accept系统调用使用的地址大小为socklen_t类型
+
+   fd_set read_fds,read;                                                    //
+   FD_ZERO(&read_fds);
+   FD_ZERO(&read);
+   FD_SET(sock_listen,&read);
+   
+   while(1)
+   {
+      read_fds=read;
+      int ret=select(1024,&read_fds,NULL,NULL,NULL);
+      printf("ret= %d \n",ret);
+      printf("%d \n",FD_ISSET(sock_listen,&read_fds));
+      if(ret<0)
+      {
+         printf("select failure\n");
+         continue;
+      }
+      for(int i=0;i<1024;i++)
+      {
+         if(i==sock_listen&&FD_ISSET(sock_listen,&read_fds))
+         {
+            int sock_client=accept(sock_listen,(struct sockaddr*)&client_addr,&client_addr_len);
+            printf("sock_client : %u port : %d\n",sock_client,ntohs(client_addr.sin_port));
+            FD_SET(sock_client,&read);
+         }
+         else if(FD_ISSET(i,&read_fds))
+         {
+            //printf("socket %d message!\n",i);
+         }
+      }
+   }
+   return 0;
+}
