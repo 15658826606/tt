@@ -1,7 +1,122 @@
 /******************************************************************************************************************************
-* Create Time : 2019-06-17
+* Create Time : 2019-06-18
 * Author      : tt
-* content     : a simple select system call program
+* content     : a simple poll system call program
 *
 ******************************************************************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <poll.h>
+
+#define ip "192.168.206.163"                                                      //服务器ip地址宏定义
+#define PORT 6666                                                                 //服务器监听端口宏定义
+#define MAXNUM 65535
+
+int main(int argc,char **argv)
+{
+   struct sockaddr_in server_addr;                                                //服务器地址结构体定义
+   bzero(&server_addr,sizeof(server_addr));                                       //把服务器地址结构体清空
+   
+   server_addr.sin_family=AF_INET;                                                //设置服务器地址结构体的地址族为TCP/IP 4 对应的值AF_INET
+   inet_pton(AF_INET,ip,&server_addr.sin_addr);                                   //设置服务器地址结构体的ip地址的值
+   //server_addr.sin_addr.s_addr=htonl(INADDR_ANY);                               //另外一种设置服务器地址结构体ip的方式（本地所有ip）
+   server_addr.sin_port=htons(PORT);                                              //设置服务器地址结构体的端口号值
+
+   int sock_listen=socket(AF_INET,SOCK_STREAM,0);                                 //定义监听socket
+   if(bind(sock_listen,(struct sockaddr*)&server_addr,sizeof(server_addr))==-1)   //把服务器地址结构体与监听socket进行绑定
+   {
+      printf("bind failed!\n");
+      exit(1);
+   }
+   if(listen(sock_listen,5)==-1)                                                   //监听开始
+   {
+      printf("listen failed!\n");
+      exit(1);
+   }
+
+   struct sockaddr_in client_addr;                                          //定义客户端连接时的客户端地址结构体
+   bzero(&client_addr,sizeof(client_addr));
+   socklen_t client_addr_len=sizeof(client_addr);                           //accept系统调用使用的地址大小为socklen_t类型
+   char ipbuf[64];                                                          //存储ip地址字符串
+   char recvbuf[1024];                                                      //读数组
+   char sendbuf[1024];                                                      //写数组
+   memset(ipbuf,'\0',sizeof(ipbuf));
+   memset(recvbuf,'\0',sizeof(ipbuf));
+   memset(sendbuf,'\0',sizeof(ipbuf));
+
+   int current=1;                        //记录当前监听的socket在数组里的最大下标
+   struct pollfd poll_fds[MAXNUM];       //监听socket结构体定义
+   poll_fds[0].fd=sock_listen;           //把poll_fds[0]对应的值设置为sock_listen表示此处监听客户端的连接
+   poll_fds[0].events=POLLIN;            //对应的事件为sock_listen上的读事件
+   for(int i=1;i<MAXNUM;i++)             //对数组其它结构体里的fd值设置为无效值
+   {
+      poll_fds[i].fd=-1;
+   }
+
+   while(1)
+   {
+      int ret=poll(poll_fds,current,-1);                   //poll系统调用，时间设为-1表示一直阻塞直到注册的socket上有事件发生
+      if(ret<0)
+      {
+         printf("poll failed!\n");
+         continue;
+      }
+      if(poll_fds[0].revents & POLLIN)                     //首先判断sock_listen上是否有新的连接，有就接受
+      {
+         int sock_client=accept(sock_listen,(struct sockaddr*)&client_addr,&client_addr_len);
+         if(sock_client<0)
+         {
+            printf("accept failed!\n");
+            exit(1);
+         }
+         printf("client ip : %s port : %d client socket : %u\n",
+                    inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ipbuf,sizeof(ipbuf)),
+                    ntohs(client_addr.sin_port),
+                    sock_client);                   //打印新的连接的ip、port、对应的连接socket值
+         int i=0;
+         for( i = 0 ;i < MAXNUM ;i++ )              //在数组里找到第一个未注册的位置将新接受的连接socket注册
+         {
+            if(poll_fds[i].fd==-1)
+            {
+               poll_fds[i].fd=sock_client;
+               poll_fds[i].events=POLLIN;
+               break;
+            }
+         }
+         current=current>i ? current : i ;          //更新current的值
+      }
+      for(int i=1;i<current;i++)                    //开始遍历其它注册的socket
+      {
+         if(poll_fds[i].fd>0&&poll_fds[i].revents &POLLIN)                  //如果该socket有效且上面发生了读事件
+         {
+            int recvlen=recv(poll_fds[i].fd,recvbuf,sizeof(recvbuf),0);     //接收读缓冲区的数据
+            if(recvlen>0)                                                   //若接收的数据字节数大于0就打印
+            {
+               printf("receive : %s\n",recvbuf);
+               
+            }
+            else if(recvlen==0)          //若接收的数据字节数等于0说明对方的socket关闭，则取消该socket注册，并关闭该socket
+            {
+               printf("connect closed : %d\n",poll_fds[i].fd);
+               close(poll_fds[i].fd);
+               poll_fds[i].fd=-1;
+            }
+            else                         //若接收的数据字节数小于0说明出错
+            {
+               printf("recv failed!\n");
+               exit(1);
+            }
+         }
+      }
+   }
+   
+   close(sock_listen);
+   return 0;
+}
