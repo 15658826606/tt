@@ -1,0 +1,54 @@
+/******************************************************************************************************************************
+* Create Time : 2019-08-10
+* Author      : tt
+* content     : an algorithm drawing a circle  Bresenham    （八分画圆）
+*
+******************************************************************************************************************************/
+
+#include <Graphics.h>
+#include <math.h>
+
+void circle_Bresenham(int x0, int y0, int R)
+{
+	int x, y, d;                                                 //声明需要画点的坐标 x 、 y 以及误差项 d
+	x = 0;                                                       //分别赋初始值
+	y = R;
+	d = 1 - R;
+
+	while (x < y)                                                //当 x<y 时画点
+	{
+		putpixel(x+x0, y+y0, WHITE);                               //画第一象限的上方的点，然后根据对称性计算其它点坐标，并根据原点坐标进行偏移
+		putpixel(y+x0, x+y0, WHITE);
+		putpixel(-x + x0, y + y0, WHITE);                          //画出第二象限的点并根据原点坐标进行偏移
+		putpixel(-y + x0, x + y0, WHITE);
+		putpixel(x + x0, -y + y0, WHITE);                          //画出第三象限的点并根据原点坐标进行偏移
+		putpixel(y + x0, -x + y0, WHITE);
+		putpixel(-x + x0, -y + y0, WHITE);                         //画出第四象限的点并根据原点坐标进行偏移
+		putpixel(-y + x0, -x + y0, WHITE);
+		
+		if (d < 0)                                                 //如果 d<0 说明下两个预选点中点坐标在圆内，下一点的 y 坐标不变
+		{
+			x += 1;
+			d = d + 2 * x + 3;                                       //更新 d 的值
+		}
+		else                                                       //如果 d>=0 说明下两个预选点中点坐标在圆外，下一点的 y 坐标减去 1  
+		{
+			x += 1;
+			y -= 1;
+			d = d + 2 * (x - y) + 5;                                 //更新 d 的值
+		}
+	}
+}
+
+int main()
+{
+	initgraph(800, 600, NULL);              //初始化一个画图窗口
+	setorigin(400, 300);                    //设置窗口中心坐标为原点坐标 
+	setaspectratio(1, -1);                  //使y轴向上为正向
+
+	circle_Bresenham(-100,-200,100);
+
+	system("pause");
+	closegraph();
+	return 0;
+}
