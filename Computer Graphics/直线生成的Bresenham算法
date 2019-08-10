@@ -1,0 +1,48 @@
+/******************************************************************************************************************************
+* Create Time : 2019-08-10
+* Author      : tt
+* content     : an algorithm drawing straight line  Bresenham （此算法适用直线斜率为 0 到 1 的情况，其它斜率情况类似）
+*
+******************************************************************************************************************************/
+
+#include <Graphics.h>
+#include <math.h>
+
+void line_Bresenham(int x0, int y0, int x1, int y1)
+{
+	int x, y, dx, dy, d;                                     //声明画点的位置坐标 x 、 y 以及 x 、 y 方向想的位移和误差项 d
+	x = x0;
+	y = y0;
+	dx = x1 - x0;
+	dy = y1 - y0;
+	d = dx - 2 * dy;                                         //计算 d 的初始值
+
+	for (int k = 0; k <= dx; k++)
+	{
+		putpixel(x, y, WHITE);                                 //画点
+		if (d < 0)                                             //如果 d<0 说明离直线最近的下一个点的 y 坐标在当前 x 的右上方
+		{
+			x += 1;                                              //更新 x 的值
+			y += 1;                                              //更新 y 的值
+			d = d + 2 * dx - 2 * dy;                             //更新 d 的值
+		}
+		else                                                   //如果 d>=0 说明离直线最近的下一个点的 y 坐标在当前 x 的正右侧
+		{
+			x += 1;                                              //更新 x 的值，此时 y 的值不变
+			d = d - 2 * dy;                                      //更新 d 的值
+		}
+	}
+}
+
+int main()
+{
+	initgraph(800, 600, NULL);              //初始化一个画图窗口
+	setorigin(400, 300);                    //设置窗口中心坐标为原点坐标 
+	setaspectratio(1, -1);                  //使y轴向上为正向
+
+	line_Bresenham(0, 0, 200, 50);
+
+	system("pause");
+	closegraph();
+	return 0;
+}
