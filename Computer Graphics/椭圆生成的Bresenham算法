@@ -17,10 +17,10 @@ void ellipse_Bresenham(int a, int b)
 
 	while (2 * a*a*(y - 0.5) > 2 * b*b*(x + 1))
 	{
-		putpixel(x, y, WHITE);
-		putpixel(-x, y, WHITE);
-		putpixel(-x, -y, WHITE);
-		putpixel(x, -y, WHITE);
+		putpixel((int)x, (int)y, WHITE);
+		putpixel((int)-x, (int)y, WHITE);
+		putpixel((int)-x, (int)-y, WHITE);
+		putpixel((int)x, (int)-y, WHITE);
 
 		if (d < 0)
 		{
@@ -37,10 +37,10 @@ void ellipse_Bresenham(int a, int b)
 	d = b*b + (x + 0.5)*(x + 0.5) + a*a*(y - 1)*(y - 1) - a*a*b*b;
 	while (y >= 0)
 	{
-		putpixel(x, y, WHITE);
-		putpixel(-x, y, WHITE);
-		putpixel(-x, -y, WHITE);
-		putpixel(x, -y, WHITE);
+		putpixel((int)x, (int)y, WHITE);
+		putpixel((int)-x,(int)y, WHITE);
+		putpixel((int)-x,(int)-y, WHITE);
+		putpixel((int)x, (int)-y, WHITE);
 
 		if (d < 0)
 		{
