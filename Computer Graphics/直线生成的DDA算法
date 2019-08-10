@@ -1,0 +1,46 @@
+/******************************************************************************************************************************
+* Create Time : 2019-08-10
+* Author      : tt
+* content     : an algorithm drawing straight line  DDA
+*
+******************************************************************************************************************************/
+
+#include <Graphics.h>
+#include <math.h>
+
+void line_DDA(int x0, int y0, int x1, int y1)
+{
+	float x, y, xIncre, yIncre;                                     //声明需要画的点坐标变量以及 x 和 y 方向上的增量
+	x = x0;                                                         //变量 x、y 赋初值
+	y = y0;
+	int dx = x1 - x0;                                               //分别计算出 x 和 y 方向上的增量 dx、dy
+	int dy = y1 - y0;
+	int esp, k;                                                     //声明最大位移方向的位移大小变量以及循环次数 k
+	if (abs(dx) >= abs(dy))
+		esp = dx;                                                     //如果最大位移方向为 x 方向
+	else
+		esp = dy;                                                     //如果最大位移方向为 y 方向
+
+	xIncre = (float)dx / (float)esp * (esp / abs(esp));             //计算 xIncre 
+	yIncre = (float)dy / (float)esp * (esp / abs(esp));             //计算 yIncre 
+
+	for (k = 0; k <=abs(esp); k++)                                  
+	{
+		putpixel((int)(x), (int)(y), WHITE);                          //循环画点
+		x += xIncre;                                                  //计算下一个点的 x 坐标
+		y += yIncre;                                                  //计算下一个点的 y 坐标
+	}
+}
+
+int main()
+{
+	initgraph(800, 600, NULL);              //初始化一个画图窗口
+	setorigin(400, 300);                    //设置窗口中心坐标为原点坐标 
+	setaspectratio(1, -1);                  //使y轴向上为正向
+
+	line_DDA(0, 0, -200, 250);
+
+	system("pause");
+	closegraph();
+	return 0;
+}
